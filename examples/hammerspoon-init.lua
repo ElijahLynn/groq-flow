@@ -24,7 +24,7 @@ groqFlowTimer = nil
 
 -- Human color name → RGB for the indicator (set via the indicator-color config).
 local GF_COLORS = {
-  red    = { 0.96, 0.31, 0.13 }, -- Grok orange-red (the logo bolt color)
+  red    = { 0.933, 0.310, 0.208 }, -- Grok bolt #EE4F35 (sampled from the logo)
   orange = { 1.00, 0.58, 0.00 },
   yellow = { 1.00, 0.80, 0.00 },
   green  = { 0.20, 0.80, 0.35 },
