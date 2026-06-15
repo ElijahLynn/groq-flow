@@ -88,7 +88,7 @@ check_deps() {
   echo "Audio driver: AUDIODRIVER=$AUDIODRIVER"
   echo "Recording device check:"
   local err
-  if err=$(rec -d trim 0 0.1 /tmp/groq-flow_devtest.wav 2>&1); then
+  if err=$(rec -q -c 1 -r 16000 /tmp/groq-flow_devtest.wav trim 0 0.1 2>&1); then
     echo "  microphone OK"
     rm -f /tmp/groq-flow_devtest.wav
   else
