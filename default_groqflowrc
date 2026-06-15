@@ -1,8 +1,9 @@
-# grokflow config — copy to ~/.config/grokflow/grokflowrc and edit.
+# groqflow config — copy to ~/.config/groqflow/groqflowrc and edit.
 # Format is  key: value  (one per line). Lines starting with # are ignored.
 
-# Grok STT model id.
-model: grok-stt
+# Groq STT model id. whisper-large-v3-turbo is fastest; whisper-large-v3 is
+# slightly more accurate on long/noisy audio.
+model: whisper-large-v3-turbo
 
 # Input language as ISO-639-1 ("en", "es", "de", ...). Leave blank to auto-detect.
 language: en

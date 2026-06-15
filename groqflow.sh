@@ -1,9 +1,9 @@
 #!/bin/bash
-# grokflow v1.0 — Whispr Flow-style dictation for macOS.
+# groqflow v1.0 — Whispr Flow-style dictation for macOS.
 # Push a hotkey to start recording, push it again to stop and transcribe.
 # The transcript is typed at your cursor in whatever app is focused.
 #
-# Transcription via the xAI Grok Speech-to-Text REST API (model: grok-stt).
+# Transcription via the Groq Speech-to-Text REST API (model: whisper-large-v3-turbo).
 #
 # Requirements (install with: brew install sox jq curl):
 #   - sox      (audio recording)
@@ -12,32 +12,32 @@
 #   - osascript / pbcopy  (built into macOS — typing & clipboard)
 #
 # Setup:
-#   1. Get an xAI API key from https://console.x.ai and put it in ~/.env :
-#        XAI_API_KEY=xai-xxxxxxxxxxxxxxxxxxxxxxxx
-#   2. chmod +x grokflow.sh ; ./grokflow.sh --check
+#   1. Get a Groq API key from https://console.groq.com/keys and put it in ~/.env :
+#        GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx
+#   2. chmod +x groqflow.sh ; ./groqflow.sh --check
 #   3. Grant Accessibility + Microphone permissions when prompted
 #      (System Settings > Privacy & Security). The app that triggers the
 #      hotkey — Terminal, Raycast, Hammerspoon, etc. — needs Accessibility.
-#   4. Bind a hotkey to: /path/to/grokflow.sh   (see README).
+#   4. Bind a hotkey to: /path/to/groqflow.sh   (see README).
 
 set -euo pipefail
 
 # ---- Load API key ----------------------------------------------------------
 [ -f "$HOME/.env" ] && source "$HOME/.env"
 
-# ---- Defaults (override in ~/.config/grokflow/grokflowrc) -------------------
-model="grok-stt"
+# ---- Defaults (override in ~/.config/groqflow/groqflowrc) -------------------
+model="whisper-large-v3-turbo"
 language="en"             # ISO-639-1; "" = auto-detect
 transcription_prompt=""   # domain words / spelling hints
 silence_threshold=-50     # dB; recordings quieter than this are treated as silent
 paste_mode="type"         # "type" = simulate keystrokes, "paste" = clipboard + Cmd-V
 max_record_seconds=300    # hard cap so a forgotten recording can't run forever
 
-RECORDING="/tmp/grokflow.wav"
-PIDFILE="/tmp/grokflow.pid"
-LOGFILE="/tmp/grokflow.log"
+RECORDING="/tmp/groqflow.wav"
+PIDFILE="/tmp/groqflow.pid"
+LOGFILE="/tmp/groqflow.log"
 
-CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/grokflow/grokflowrc"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/groqflow/groqflowrc"
 if [ -f "$CONFIG_FILE" ]; then
   while IFS=: read -r key value || [ -n "$key" ]; do
     [[ "$key" =~ ^[[:space:]]*# ]] && continue
@@ -75,11 +75,11 @@ check_deps() {
     echo "Install with:  brew install sox jq curl" >&2
     exit 1
   fi
-  [ -n "${XAI_API_KEY:-}" ] || die "XAI_API_KEY not set. Add it to ~/.env"
-  echo "All dependencies present. XAI_API_KEY is set."
+  [ -n "${GROQ_API_KEY:-}" ] || die "GROQ_API_KEY not set. Add it to ~/.env"
+  echo "All dependencies present. GROQ_API_KEY is set."
   echo "Recording device check:"
-  rec -d trim 0 0.1 /tmp/grokflow_devtest.wav 2>/dev/null \
-    && { echo "  microphone OK"; rm -f /tmp/grokflow_devtest.wav; } \
+  rec -d trim 0 0.1 /tmp/groqflow_devtest.wav 2>/dev/null \
+    && { echo "  microphone OK"; rm -f /tmp/groqflow_devtest.wav; } \
     || echo "  microphone test FAILED — check Microphone permission for your terminal."
 }
 
@@ -120,7 +120,7 @@ is_silent() {
   }' | grep -q silent
 }
 
-# ---- Transcription via Grok STT --------------------------------------------
+# ---- Transcription via Groq STT --------------------------------------------
 transcribe() {
   local recording="$1"
   local start_ns; start_ns=$(date +%s)
@@ -132,23 +132,23 @@ transcribe() {
   [ -n "$transcription_prompt" ] && prompt_args=(-F "prompt=$transcription_prompt")
 
   local response
-  response=$(curl -s --max-time 120 -X POST "https://api.x.ai/v1/stt" \
-    -H "Authorization: Bearer $XAI_API_KEY" \
+  response=$(curl -s --max-time 120 -X POST "https://api.groq.com/openai/v1/audio/transcriptions" \
+    -H "Authorization: Bearer $GROQ_API_KEY" \
     -F "model=$model" \
     -F "file=@$recording" \
-    -F "format=json" \
+    -F "response_format=json" \
     "${lang_args[@]}" \
     "${prompt_args[@]}")
 
-  # Grok STT returns JSON with a "text" field. Fall back to .transcript if present.
+  # Groq's OpenAI-compatible endpoint returns JSON with a "text" field.
   local text
-  text=$(printf '%s' "$response" | jq -r '.text // .transcript // empty' 2>/dev/null)
+  text=$(printf '%s' "$response" | jq -r '.text // empty' 2>/dev/null)
 
   if [ -z "$text" ]; then
     local err
     err=$(printf '%s' "$response" | jq -r '.error.message // .error // empty' 2>/dev/null)
     log "Transcription failed. Raw response: $response"
-    notify "grokflow" "Transcription failed${err:+: $err}"
+    notify "groqflow" "Transcription failed${err:+: $err}"
     echo ""
     return 1
   fi
@@ -161,7 +161,7 @@ transcribe() {
 
 # ---- Recording control -----------------------------------------------------
 start_recording() {
-  notify "grokflow" "Recording… (hotkey again to stop)"
+  notify "groqflow" "Recording… (hotkey again to stop)"
   log "Recording started."
   # 16kHz mono is what Whisper-class models want; small file, fast upload.
   # rec writes until killed or max_record_seconds elapses.
@@ -175,15 +175,15 @@ stop_and_transcribe() {
   kill "$pid" 2>/dev/null || true
   sleep 0.3   # let sox flush the WAV
 
-  [ -f "$RECORDING" ] || { notify "grokflow" "No recording found"; exit 0; }
+  [ -f "$RECORDING" ] || { notify "groqflow" "No recording found"; exit 0; }
 
   if is_silent "$RECORDING"; then
-    notify "grokflow" "No sound detected"
+    notify "groqflow" "No sound detected"
     rm -f "$RECORDING"
     exit 0
   fi
 
-  notify "grokflow" "Transcribing…"
+  notify "groqflow" "Transcribing…"
   local transcription
   transcription=$(transcribe "$RECORDING") || { rm -f "$RECORDING"; exit 1; }
   rm -f "$RECORDING"
@@ -206,8 +206,8 @@ case "${1:-}" in
   *) die "Unknown option '$1' (try --help)" ;;
 esac
 
-command -v rec >/dev/null 2>&1 || die "sox not installed. Run: brew install sox  (then ./grokflow.sh --check)"
-[ -n "${XAI_API_KEY:-}" ] || die "XAI_API_KEY not set. Add it to ~/.env"
+command -v rec >/dev/null 2>&1 || die "sox not installed. Run: brew install sox  (then ./groqflow.sh --check)"
+[ -n "${GROQ_API_KEY:-}" ] || die "GROQ_API_KEY not set. Add it to ~/.env"
 
 # Toggle: if a recording PID is live, stop+transcribe; otherwise start.
 if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
