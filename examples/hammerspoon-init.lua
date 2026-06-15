@@ -24,7 +24,7 @@ groqFlowTimer = nil
 
 -- Human color name → RGB for the indicator (set via the indicator-color config).
 local GF_COLORS = {
-  red    = { 1.00, 0.23, 0.19 },
+  red    = { 0.96, 0.31, 0.13 }, -- Grok orange-red (the logo bolt color)
   orange = { 1.00, 0.58, 0.00 },
   yellow = { 1.00, 0.80, 0.00 },
   green  = { 0.20, 0.80, 0.35 },
@@ -92,29 +92,29 @@ end
 local function groqFlowShowOrb(rgb)
   local SZ = 96
   local x, y = gfPos(SZ, SZ)
-  local cx, cy, R = SZ / 2, SZ / 2, SZ * 0.30
+  local cx, cy, R = SZ / 2, SZ / 2, SZ * 0.32
   groqFlowCanvas = hs.canvas.new({ x = x, y = y, w = SZ, h = SZ })
-  groqFlowCanvas[1] = { -- soft halo glow (pulses)
+  groqFlowCanvas[1] = { -- soft colored halo glow in the bolt color (pulses)
     type = "circle", action = "fill",
-    fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.25 },
-    center = { x = cx, y = cy }, radius = R * 1.4,
+    fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.30 },
+    center = { x = cx, y = cy }, radius = R * 1.35,
   }
-  groqFlowCanvas[2] = { -- the orb: radial gradient gives a 3D sphere look
+  groqFlowCanvas[2] = { -- white 3D sphere: radial gradient bright -> light gray
     type = "circle", action = "fill",
     fillGradient = "radial",
-    fillGradientColors = { gfLighter(rgb, 0.55), gfDarker(rgb, 0.45) },
+    fillGradientColors = { { white = 1, alpha = 1 }, { white = 0.78, alpha = 1 } },
     fillGradientCenter = { x = -0.35, y = -0.35 }, -- highlight toward top-left
     center = { x = cx, y = cy }, radius = R,
   }
-  groqFlowCanvas[3] = { -- glossy specular highlight
+  groqFlowCanvas[3] = { -- bright glossy specular highlight
     type = "circle", action = "fill",
-    fillColor = { white = 1, alpha = 0.28 },
-    center = { x = cx - R * 0.30, y = cy - R * 0.32 }, radius = R * 0.30,
+    fillColor = { white = 1, alpha = 0.9 },
+    center = { x = cx - R * 0.34, y = cy - R * 0.36 }, radius = R * 0.18,
   }
-  groqFlowCanvas[4] = { -- lightning bolt
+  groqFlowCanvas[4] = { -- the Grok lightning bolt — the colored part
     type = "segments", closed = true, action = "fill",
-    fillColor = { white = 1, alpha = 0.95 },
-    coordinates = gfBoltCoords(cx, cy, R * 1.5),
+    fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 1 },
+    coordinates = gfBoltCoords(cx, cy, R * 1.45),
   }
   groqFlowCanvas:level(hs.canvas.windowLevels.overlay)
   groqFlowCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
@@ -125,13 +125,13 @@ local function groqFlowShowOrb(rgb)
     t = t + 1
     local a = math.sin(t * (2 * math.pi / 55))
     local u = a * 0.5 + 0.5 -- 0..1
-    local s = 1 + 0.06 * a  -- gentle breathing scale
-    groqFlowCanvas[1].radius = R * (1.30 + 0.30 * u)
-    groqFlowCanvas[1].fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.12 + 0.22 * u }
+    local s = 1 + 0.05 * a  -- gentle breathing scale
+    groqFlowCanvas[1].radius = R * (1.25 + 0.30 * u)
+    groqFlowCanvas[1].fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.15 + 0.25 * u }
     groqFlowCanvas[2].radius = R * s
-    groqFlowCanvas[3].radius = R * 0.30 * s
-    groqFlowCanvas[3].center = { x = cx - R * 0.30 * s, y = cy - R * 0.32 * s }
-    groqFlowCanvas[4].coordinates = gfBoltCoords(cx, cy, R * 1.5 * s)
+    groqFlowCanvas[3].radius = R * 0.18 * s
+    groqFlowCanvas[3].center = { x = cx - R * 0.34 * s, y = cy - R * 0.36 * s }
+    groqFlowCanvas[4].coordinates = gfBoltCoords(cx, cy, R * 1.45 * s)
   end)
 end
 
