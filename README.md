@@ -138,9 +138,13 @@ Karabiner to remap it first.
 | `silence-threshold`    | `-50`                     | dB peak below which a clip counts as silent        |
 | `paste-mode`           | `type`                    | `type` (keystrokes) or `paste` (clipboard + Cmd-V) |
 | `max-record-seconds`   | `300`                     | hard cap on one recording                          |
+| `indicator-color`      | `red`                     | level-meter color (Hammerspoon setup)              |
 
 Set `model: whisper-large-v3` if you want the slightly more accurate (but
 slower) model for long or noisy audio.
+
+`indicator-color` accepts `red`, `orange`, `yellow`, `green`, `blue`, `purple`,
+`pink`, or `white` (only affects the Hammerspoon level-meter).
 
 ## Notes & limits
 

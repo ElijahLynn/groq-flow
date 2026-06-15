@@ -23,10 +23,25 @@ groqflowTimer = nil
 local GF_BARS, GF_BARW, GF_GAP, GF_MAXH, GF_MINH = 5, 5, 4, 24, 5
 local GF_PAD = 36 -- px above the bottom of the usable screen
 
-function groqflowIndicator(on)
+-- Human color name → RGB for the meter bars (set via the indicator-color config).
+local GF_COLORS = {
+  red    = { 1.00, 0.23, 0.19 },
+  orange = { 1.00, 0.58, 0.00 },
+  yellow = { 1.00, 0.80, 0.00 },
+  green  = { 0.20, 0.80, 0.35 },
+  blue   = { 0.20, 0.52, 1.00 },
+  purple = { 0.70, 0.30, 0.95 },
+  pink   = { 1.00, 0.35, 0.70 },
+  white  = { 0.95, 0.95, 0.95 },
+}
+
+function groqflowIndicator(on, color)
   if groqflowTimer then groqflowTimer:stop(); groqflowTimer = nil end
   if groqflowCanvas then groqflowCanvas:delete(); groqflowCanvas = nil end
   if not on then return end
+
+  local rgb = GF_COLORS[color] or GF_COLORS.red
+  local fill = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.95 }
 
   local f = hs.screen.mainScreen():frame()
   local w = GF_BARS * GF_BARW + (GF_BARS - 1) * GF_GAP
@@ -38,7 +53,7 @@ function groqflowIndicator(on)
     groqflowCanvas[i] = {
       type = "rectangle",
       action = "fill",
-      fillColor = { red = 1, green = 0.23, blue = 0.19, alpha = 0.95 },
+      fillColor = fill,
       roundedRectRadii = { xRadius = 2.5, yRadius = 2.5 },
       frame = { x = (i - 1) * (GF_BARW + GF_GAP), y = GF_MAXH - GF_MINH, w = GF_BARW, h = GF_MINH },
     }
