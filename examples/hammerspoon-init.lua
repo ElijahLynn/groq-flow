@@ -96,25 +96,25 @@ local function groqFlowShowOrb(rgb)
   groqFlowCanvas = hs.canvas.new({ x = x, y = y, w = SZ, h = SZ })
   groqFlowCanvas[1] = { -- thin (~2px) ring hugging the orb (breathes with it)
     type = "circle", action = "stroke",
-    strokeColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.95 },
+    strokeColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.80 },
     strokeWidth = 2,
     center = { x = cx, y = cy }, radius = R + 1,
   }
-  groqFlowCanvas[2] = { -- white 3D sphere: radial gradient bright -> light gray
+  groqFlowCanvas[2] = { -- translucent white 3D sphere (lets content behind show through)
     type = "circle", action = "fill",
     fillGradient = "radial",
-    fillGradientColors = { { white = 1, alpha = 1 }, { white = 0.78, alpha = 1 } },
+    fillGradientColors = { { white = 1, alpha = 0.78 }, { white = 0.78, alpha = 0.78 } },
     fillGradientCenter = { x = -0.35, y = -0.35 }, -- highlight toward top-left
     center = { x = cx, y = cy }, radius = R,
   }
-  groqFlowCanvas[3] = { -- bright glossy specular highlight
+  groqFlowCanvas[3] = { -- glossy specular highlight
     type = "circle", action = "fill",
-    fillColor = { white = 1, alpha = 0.9 },
+    fillColor = { white = 1, alpha = 0.5 },
     center = { x = cx - R * 0.34, y = cy - R * 0.36 }, radius = R * 0.18,
   }
   groqFlowCanvas[4] = { -- the Grok lightning bolt — the colored part
     type = "segments", closed = true, action = "fill",
-    fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 1 },
+    fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.82 },
     coordinates = gfBoltCoords(cx, cy, R * 1.45),
   }
   groqFlowCanvas:level(hs.canvas.windowLevels.overlay)
