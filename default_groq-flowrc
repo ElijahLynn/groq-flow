@@ -1,4 +1,4 @@
-# groqflow config — copy to ~/.config/groqflow/groqflowrc and edit.
+# groq-flow config — copy to ~/.config/groq-flow/groq-flowrc and edit.
 # Format is  key: value  (one per line). Lines starting with # are ignored.
 
 # Groq STT model id. whisper-large-v3-turbo is fastest; whisper-large-v3 is

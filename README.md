@@ -1,4 +1,4 @@
-# groqflow
+# groq-flow
 
 A Whispr Flow-style dictation tool for macOS. Press a hotkey to start
 recording, press it again to stop — the transcript is typed straight into
@@ -32,15 +32,15 @@ echo 'GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx' >> ~/.env
 
 # 3. Drop the script somewhere on your PATH and make it runnable
 mkdir -p ~/bin
-cp groqflow.sh ~/bin/groqflow
-chmod +x ~/bin/groqflow
+cp groq-flow.sh ~/bin/groq-flow
+chmod +x ~/bin/groq-flow
 
 # 4. (optional) config
-mkdir -p ~/.config/groqflow
-cp default_groqflowrc ~/.config/groqflow/groqflowrc
+mkdir -p ~/.config/groq-flow
+cp default_groq-flowrc ~/.config/groq-flow/groq-flowrc
 
 # 5. Sanity check
-groqflow --check
+groq-flow --check
 ```
 
 ## Permissions (the part everyone misses)
@@ -60,35 +60,35 @@ fails, it's Microphone.
 You can't bind a shell script to a global key on its own — you need a launcher.
 Pick one:
 
-**Raycast** (easiest): create a Script Command pointing at `~/bin/groqflow`,
+**Raycast** (easiest): create a Script Command pointing at `~/bin/groq-flow`,
 then assign it a hotkey in Raycast's settings.
 
 **Hammerspoon** — add to `~/.hammerspoon/init.lua`:
 
 ```lua
 hs.hotkey.bind({"cmd", "alt"}, "D", function()
-  hs.task.new("/Users/YOU/bin/groqflow", nil):start()
+  hs.task.new("/Users/YOU/bin/groq-flow", nil):start()
 end)
 ```
 
 **skhd** — add to `~/.skhdrc`:
 
 ```
-cmd + alt - d : /Users/YOU/bin/groqflow
+cmd + alt - d : /Users/YOU/bin/groq-flow
 ```
 
-**Automator + Shortcuts**: wrap `~/bin/groqflow` in a "Run Shell Script" Quick
+**Automator + Shortcuts**: wrap `~/bin/groq-flow` in a "Run Shell Script" Quick
 Action, then assign a keyboard shortcut to it in System Settings → Keyboard →
 Keyboard Shortcuts → Services.
 
 ## Usage
 
-- Run `groqflow` (via your hotkey) once to start, again to stop + transcribe.
-- `groqflow --check` — verify deps, key, and mic.
-- `groqflow --stop`  — abort a recording without transcribing.
-- `groqflow --log`   — show the transcription log at `/tmp/groqflow.log`.
+- Run `groq-flow` (via your hotkey) once to start, again to stop + transcribe.
+- `groq-flow --check` — verify deps, key, and mic.
+- `groq-flow --stop`  — abort a recording without transcribing.
+- `groq-flow --log`   — show the transcription log at `/tmp/groq-flow.log`.
 
-## Config (`~/.config/groqflow/groqflowrc`)
+## Config (`~/.config/groq-flow/groq-flowrc`)
 
 
 | Key                    | Default                   | What it does                                       |
@@ -121,5 +121,5 @@ push-to-dictate.
 - *Nothing types* → Accessibility permission for the launching app.
 - *Recording fails / "No sound detected"* → Microphone permission, or lower
 `silence-threshold` to e.g. `-55`.
-- *Transcription fails* → run `groqflow --log` to see the raw API response;
+- *Transcription fails* → run `groq-flow --log` to see the raw API response;
 usually a bad/expired `GROQ_API_KEY` or a rate limit.

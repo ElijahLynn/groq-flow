@@ -1,5 +1,5 @@
 #!/bin/bash
-# groqflow v1.0 — Whispr Flow-style dictation for macOS.
+# groq-flow v1.0 — Whispr Flow-style dictation for macOS.
 # Push a hotkey to start recording, push it again to stop and transcribe.
 # The transcript is typed at your cursor in whatever app is focused.
 #
@@ -14,18 +14,18 @@
 # Setup:
 #   1. Get a Groq API key from https://console.groq.com/keys and put it in ~/.env :
 #        GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx
-#   2. chmod +x groqflow.sh ; ./groqflow.sh --check
+#   2. chmod +x groq-flow.sh ; ./groq-flow.sh --check
 #   3. Grant Accessibility + Microphone permissions when prompted
 #      (System Settings > Privacy & Security). The app that triggers the
 #      hotkey — Terminal, Raycast, Hammerspoon, etc. — needs Accessibility.
-#   4. Bind a hotkey to: /path/to/groqflow.sh   (see README).
+#   4. Bind a hotkey to: /path/to/groq-flow.sh   (see README).
 
 set -euo pipefail
 
 # ---- Load API key ----------------------------------------------------------
 [ -f "$HOME/.env" ] && source "$HOME/.env"
 
-# ---- Defaults (override in ~/.config/groqflow/groqflowrc) -------------------
+# ---- Defaults (override in ~/.config/groq-flow/groq-flowrc) -------------------
 model="whisper-large-v3-turbo"
 language="en"             # ISO-639-1; "" = auto-detect
 transcription_prompt=""   # domain words / spelling hints
@@ -33,11 +33,11 @@ silence_threshold=-50     # dB; recordings quieter than this are treated as sile
 paste_mode="type"         # "type" = simulate keystrokes, "paste" = clipboard + Cmd-V
 max_record_seconds=300    # hard cap so a forgotten recording can't run forever
 
-RECORDING="/tmp/groqflow.wav"
-PIDFILE="/tmp/groqflow.pid"
-LOGFILE="/tmp/groqflow.log"
+RECORDING="/tmp/groq-flow.wav"
+PIDFILE="/tmp/groq-flow.pid"
+LOGFILE="/tmp/groq-flow.log"
 
-CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/groqflow/groqflowrc"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/groq-flow/groq-flowrc"
 if [ -f "$CONFIG_FILE" ]; then
   while IFS=: read -r key value || [ -n "$key" ]; do
     [[ "$key" =~ ^[[:space:]]*# ]] && continue
@@ -78,8 +78,8 @@ check_deps() {
   [ -n "${GROQ_API_KEY:-}" ] || die "GROQ_API_KEY not set. Add it to ~/.env"
   echo "All dependencies present. GROQ_API_KEY is set."
   echo "Recording device check:"
-  rec -d trim 0 0.1 /tmp/groqflow_devtest.wav 2>/dev/null \
-    && { echo "  microphone OK"; rm -f /tmp/groqflow_devtest.wav; } \
+  rec -d trim 0 0.1 /tmp/groq-flow_devtest.wav 2>/dev/null \
+    && { echo "  microphone OK"; rm -f /tmp/groq-flow_devtest.wav; } \
     || echo "  microphone test FAILED — check Microphone permission for your terminal."
 }
 
@@ -148,7 +148,7 @@ transcribe() {
     local err
     err=$(printf '%s' "$response" | jq -r '.error.message // .error // empty' 2>/dev/null)
     log "Transcription failed. Raw response: $response"
-    notify "groqflow" "Transcription failed${err:+: $err}"
+    notify "groq-flow" "Transcription failed${err:+: $err}"
     echo ""
     return 1
   fi
@@ -161,7 +161,7 @@ transcribe() {
 
 # ---- Recording control -----------------------------------------------------
 start_recording() {
-  notify "groqflow" "Recording… (hotkey again to stop)"
+  notify "groq-flow" "Recording… (hotkey again to stop)"
   log "Recording started."
   # 16kHz mono is what Whisper-class models want; small file, fast upload.
   # rec writes until killed or max_record_seconds elapses.
@@ -175,15 +175,15 @@ stop_and_transcribe() {
   kill "$pid" 2>/dev/null || true
   sleep 0.3   # let sox flush the WAV
 
-  [ -f "$RECORDING" ] || { notify "groqflow" "No recording found"; exit 0; }
+  [ -f "$RECORDING" ] || { notify "groq-flow" "No recording found"; exit 0; }
 
   if is_silent "$RECORDING"; then
-    notify "groqflow" "No sound detected"
+    notify "groq-flow" "No sound detected"
     rm -f "$RECORDING"
     exit 0
   fi
 
-  notify "groqflow" "Transcribing…"
+  notify "groq-flow" "Transcribing…"
   local transcription
   transcription=$(transcribe "$RECORDING") || { rm -f "$RECORDING"; exit 1; }
   rm -f "$RECORDING"
@@ -206,7 +206,7 @@ case "${1:-}" in
   *) die "Unknown option '$1' (try --help)" ;;
 esac
 
-command -v rec >/dev/null 2>&1 || die "sox not installed. Run: brew install sox  (then ./groqflow.sh --check)"
+command -v rec >/dev/null 2>&1 || die "sox not installed. Run: brew install sox  (then ./groq-flow.sh --check)"
 [ -n "${GROQ_API_KEY:-}" ] || die "GROQ_API_KEY not set. Add it to ~/.env"
 
 # Toggle: if a recording PID is live, stop+transcribe; otherwise start.
