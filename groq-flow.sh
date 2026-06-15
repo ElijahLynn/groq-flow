@@ -156,6 +156,25 @@ is_silent() {
   }' | grep -q silent
 }
 
+# Whisper-class models echo the bias prompt when the audio is (near-)silent, so
+# an empty press can "transcribe" to your jargon list. Treat the result as
+# no-speech when every word of it also appears in the transcription prompt.
+is_prompt_echo() {
+  local text="$1"
+  [ -z "$transcription_prompt" ] && return 1
+  local norm_prompt norm_text w
+  norm_prompt=$(printf ' %s ' "$transcription_prompt" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' ' ')
+  norm_text=$(printf '%s' "$text" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' ' ')
+  [ -z "${norm_text// /}" ] && return 1   # no real words -> let other checks handle it
+  for w in $norm_text; do
+    case "$norm_prompt" in
+      *" $w "*) ;;        # word came from the prompt
+      *) return 1 ;;       # a word outside the prompt -> real speech, keep it
+    esac
+  done
+  return 0                 # every word was a prompt word -> echo, discard
+}
+
 # ---- Transcription via Groq STT --------------------------------------------
 transcribe() {
   local recording="$1"
@@ -225,6 +244,10 @@ stop_and_transcribe() {
   rm -f "$RECORDING"
 
   [ -z "$transcription" ] && exit 0
+  if is_prompt_echo "$transcription"; then
+    log "Discarded prompt echo (no speech): [$transcription]"
+    exit 0
+  fi
   type_text "$transcription"
 }
 
