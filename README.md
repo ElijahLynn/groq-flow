@@ -1,11 +1,24 @@
 # groq-flow
 
-A Whispr Flow-style dictation tool for macOS. Press a hotkey to start
-recording, press it again to stop — the transcript is typed straight into
-whatever app has focus. Transcription runs through the **Groq Speech-to-Text
-API** (`whisper-large-v3-turbo`).
+> **Tap Caps Lock. Talk. Tap again. Your words appear — in any app.**
 
-**Mostly free.** The script costs nothing; you only need a free [Groq API
+groq-flow turns the most useless key on your Mac into a push-to-dictate
+superpower. Tap **Caps Lock**, say what you're thinking, tap it again — the
+transcript types itself straight into whatever window has focus: Slack, your
+editor, the terminal, a browser field, anywhere. No "switch to the dictation
+app" dance, no clicking a mic button. Just talk.
+
+It's [Whispr Flow](https://wisprflow.ai)-style dictation for macOS, powered by
+**Groq's `whisper-large-v3-turbo`** — inference so fast (~200x+ real-time) the
+text lands almost the instant you stop speaking. And it's **mostly free**.
+
+> ⌨️ **This is built around the Caps Lock key.** The recommended setup
+> (Karabiner-Elements + Hammerspoon, in [`examples/`](examples/)) repurposes
+> Caps Lock — usually wasted real estate — as your dictation button. You *can*
+> rebind to another key or chord, but Caps Lock is the blessed, batteries-included
+> path.
+
+**The cost.** The script costs nothing; you only need a free [Groq API
 key](https://console.groq.com/keys). On the default model, Groq's free tier
 includes **480 minutes (~8 hours) of audio per day** and **120 minutes per
 hour** — more than enough for everyday dictation. Each clip counts for at
@@ -13,9 +26,8 @@ least 10 seconds. Limits are per organization and can change; see
 [Groq rate limits](https://console.groq.com/docs/rate-limits).
 
 It's the macOS cousin of [xhisper](https://github.com/imaginalnika/xhisper)
-(Linux): same toggle-to-dictate idea, but built on macOS audio + Accessibility
-APIs. Like xhisper, it uses Groq's blazing-fast Whisper inference (~200x+
-real-time), so dictation feels near-instant.
+(Linux): same toggle-to-dictate idea and the same Groq backend, rebuilt on
+macOS audio + Accessibility APIs.
 
 ## How it works
 
