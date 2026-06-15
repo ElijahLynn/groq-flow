@@ -43,9 +43,49 @@ end
 local function gfDarker(rgb, f) -- scale toward black
   return { red = rgb[1] * f, green = rgb[2] * f, blue = rgb[3] * f, alpha = 1 }
 end
-local function gfPos(w, h) -- bottom-center placement on the main screen
+local GF_POS_KEY = "groqFlowIndicatorCenter" -- persisted drag position (screen-space center)
+
+local function gfPos(w, h) -- saved drag position if any, else bottom-center
+  local saved = hs.settings.get(GF_POS_KEY)
+  if type(saved) == "table" and saved.x and saved.y then
+    return saved.x - w / 2, saved.y - h / 2
+  end
   local f = hs.screen.mainScreen():frame()
   return f.x + (f.w - w) / 2, f.y + f.h - h - GF_PAD
+end
+
+-- Make the indicator draggable; on release, persist its center so it reappears
+-- in the same spot next time (across Hammerspoon restarts via hs.settings).
+local gfDragTap = nil
+local function gfMakeDraggable(canvas, w, h)
+  canvas:canvasMouseEvents(true, true) -- receive mouseDown / mouseUp
+  canvas:mouseCallback(function(c, message)
+    if message ~= "mouseDown" then return end
+    local mp = hs.mouse.absolutePosition()
+    local tl = c:topLeft()
+    local dx, dy = mp.x - tl.x, mp.y - tl.y
+    if gfDragTap then gfDragTap:stop() end
+    gfDragTap = hs.eventtap.new(
+      { hs.eventtap.event.types.leftMouseDragged, hs.eventtap.event.types.leftMouseUp },
+      function(e)
+        local m = hs.mouse.absolutePosition()
+        if e:getType() == hs.eventtap.event.types.leftMouseUp then
+          if gfDragTap then gfDragTap:stop(); gfDragTap = nil end
+          hs.settings.set(GF_POS_KEY, { x = m.x - dx + w / 2, y = m.y - dy + h / 2 })
+          return false
+        end
+        c:topLeft({ x = m.x - dx, y = m.y - dy })
+        return true
+      end)
+    gfDragTap:start()
+  end)
+end
+
+-- Clear a saved position (indicator returns to bottom-center). Call via:
+--   hs -c "groqFlowResetPosition()"
+function groqFlowResetPosition()
+  hs.settings.clear(GF_POS_KEY)
+  hs.alert.show("groq-flow indicator position reset")
 end
 
 -- Stylized lightning bolt outline (normalized 0..1, y points down).
@@ -79,6 +119,7 @@ local function groqFlowShowMeter(rgb)
   groqFlowCanvas:level(hs.canvas.windowLevels.overlay)
   groqFlowCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
   groqFlowCanvas:show()
+  gfMakeDraggable(groqFlowCanvas, w, GF_MAXH)
   groqFlowTimer = hs.timer.doEvery(0.1, function()
     if not groqFlowCanvas then return end
     for i = 1, GF_BARS do
@@ -120,6 +161,7 @@ local function groqFlowShowOrb(rgb)
   groqFlowCanvas:level(hs.canvas.windowLevels.overlay)
   groqFlowCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
   groqFlowCanvas:show()
+  gfMakeDraggable(groqFlowCanvas, SZ, SZ)
   local t = 0
   groqFlowTimer = hs.timer.doEvery(0.05, function() -- gentle ~2.2s breathe: ring + orb together
     if not groqFlowCanvas then return end
