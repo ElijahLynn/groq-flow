@@ -251,7 +251,7 @@ stop_and_transcribe() {
   [ -f "$RECORDING" ] || { notify "groq-flow" "No recording found"; exit 0; }
 
   if is_silent "$RECORDING"; then
-    notify "groq-flow" "No sound detected"
+    log "Silent clip — nothing to transcribe."
     rm -f "$RECORDING"
     exit 0
   fi
