@@ -16,9 +16,8 @@
 #      ~/.env (or a project-local ./.env, which overrides ~/.env) :
 #        GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx
 #   2. chmod +x groq-flow.sh ; ./groq-flow.sh --check
-#   3. Grant Accessibility + Microphone permissions when prompted
-#      (System Settings > Privacy & Security). The app that triggers the
-#      hotkey — Terminal, Raycast, Hammerspoon, etc. — needs Accessibility.
+#   3. Grant Accessibility to Hammerspoon; Microphone is prompted on first
+#      recording (System Settings > Privacy & Security).
 #   4. Bind a hotkey to: /path/to/groq-flow.sh   (see README).
 
 set -euo pipefail

@@ -5,6 +5,13 @@ recording, press it again to stop — the transcript is typed straight into
 whatever app has focus. Transcription runs through the **Groq Speech-to-Text
 API** (`whisper-large-v3-turbo`).
 
+**Mostly free.** The script costs nothing; you only need a free [Groq API
+key](https://console.groq.com/keys). On the default model, Groq's free tier
+includes **480 minutes (~8 hours) of audio per day** and **120 minutes per
+hour** — more than enough for everyday dictation. Each clip counts for at
+least 10 seconds. Limits are per organization and can change; see
+[Groq rate limits](https://console.groq.com/docs/rate-limits).
+
 It's the macOS cousin of [xhisper](https://github.com/imaginalnika/xhisper)
 (Linux): same toggle-to-dictate idea, but built on macOS audio + Accessibility
 APIs. Like xhisper, it uses Groq's blazing-fast Whisper inference (~200x+
@@ -28,15 +35,18 @@ is a local CLI, not a web app, so the key isn't exposed to a browser.
 ```bash
 # 1. Dependencies
 brew install sox jq curl
+brew install --cask hammerspoon
 
 # 2. API key — get one at https://console.groq.com/keys, then:
 echo 'GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx' >> ~/.env
 # (or drop a project-local ./.env with the same line — it overrides ~/.env)
 
 # 3. Drop the script somewhere on your PATH and make it runnable
-mkdir -p ~/bin
-cp groq-flow.sh ~/bin/groq-flow
-chmod +x ~/bin/groq-flow
+mkdir -p ~/.local/bin
+cp groq-flow.sh ~/.local/bin/groq-flow
+chmod +x ~/.local/bin/groq-flow
+# fish adds ~/.local/bin automatically; zsh users may need:
+#   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
 
 # 4. (optional) config
 mkdir -p ~/.config/groq-flow
@@ -48,41 +58,36 @@ groq-flow --check
 
 ## Permissions (the part everyone misses)
 
-macOS gates both the mic and synthetic keystrokes. Grant these to **whatever
-app launches the hotkey** — your terminal, Raycast, Hammerspoon, BetterTouchTool,
-or Shortcuts:
+macOS gates synthetic keystrokes and microphone access separately.
 
-- **System Settings → Privacy & Security → Microphone** → enable the launching app
-- **System Settings → Privacy & Security → Accessibility** → enable the launching app
+**Accessibility** — enable **Hammerspoon** before typing will work:
+
+- **System Settings → Privacy & Security → Accessibility** → Hammerspoon → on
+
+**Microphone** — Hammerspoon won't appear in this list until you've tried
+recording at least once. Press your hotkey (or run `groq-flow --check` via
+that hotkey) and allow the prompt. Then confirm in **System Settings → Privacy
+& Security → Microphone** if needed.
 
 If text isn't appearing, Accessibility is almost always the cause. If recording
-fails, it's Microphone.
+fails, it's Microphone — trigger a recording first so the app shows up to enable.
 
 ## Bind it to a hotkey
 
-You can't bind a shell script to a global key on its own — you need a launcher.
-Pick one:
+Launch Hammerspoon once, then add to `~/.hammerspoon/init.lua`:
 
-**Raycast** (easiest): create a Script Command pointing at `~/bin/groq-flow`,
-then assign it a hotkey in Raycast's settings.
-
-**Hammerspoon** — add to `~/.hammerspoon/init.lua`:
+```bash
+open /Applications/Hammerspoon.app   # grant Accessibility when prompted
+```
 
 ```lua
 hs.hotkey.bind({"cmd", "alt"}, "D", function()
-  hs.task.new("/Users/YOU/bin/groq-flow", nil):start()
+  hs.task.new("/Users/YOU/.local/bin/groq-flow", nil):start()
 end)
 ```
 
-**skhd** — add to `~/.skhdrc`:
-
-```
-cmd + alt - d : /Users/YOU/bin/groq-flow
-```
-
-**Automator + Shortcuts**: wrap `~/bin/groq-flow` in a "Run Shell Script" Quick
-Action, then assign a keyboard shortcut to it in System Settings → Keyboard →
-Keyboard Shortcuts → Services.
+Reload the config from the Hammerspoon menu bar icon (or run `hs.reload()` in the
+console).
 
 ## Usage
 
@@ -114,15 +119,16 @@ characters in apps that throttle input. `paste` is faster and Unicode-clean;
 it briefly uses the clipboard and restores it afterward. Switch in the config.
 - **Terminal apps**: keystroke injection works in most apps. If a specific app
 misbehaves, try `paste-mode: paste`.
-- Groq transcription pricing is billed per hour of audio — verify current rates
-and your account limits in the [Groq console](https://console.groq.com).
+- **Free tier limits**: see the summary at the top. Paid tiers bill per hour of
+  audio — check the [Groq console](https://console.groq.com) for current rates.
 - This uses the REST endpoint (record-then-send), which is ideal for
 push-to-dictate.
 
 ## Troubleshooting
 
-- *Nothing types* → Accessibility permission for the launching app.
-- *Recording fails / "No sound detected"* → Microphone permission, or lower
-`silence-threshold` to e.g. `-55`.
+- *Nothing types* → Accessibility permission for Hammerspoon.
+- *Recording fails / "No sound detected"* → use the hotkey once and allow the
+  Microphone prompt, then check **System Settings → Privacy & Security →
+  Microphone** for Hammerspoon; or lower `silence-threshold` to e.g. `-55`.
 - *Transcription fails* → run `groq-flow --log` to see the raw API response;
 usually a bad/expired `GROQ_API_KEY` or a rate limit.
