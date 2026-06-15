@@ -1,0 +1,24 @@
+# grokflow config — copy to ~/.config/grokflow/grokflowrc and edit.
+# Format is  key: value  (one per line). Lines starting with # are ignored.
+
+# Grok STT model id.
+model: grok-stt
+
+# Input language as ISO-639-1 ("en", "es", "de", ...). Leave blank to auto-detect.
+language: en
+
+# Optional context words / spelling hints to improve accuracy on jargon.
+# e.g. proper nouns, product names, acronyms you say often.
+transcription-prompt: Hedera, Hiero, Hashgraph, Jenkins, Ansible, iDRAC, RHEL
+
+# Recordings whose peak volume is below this (in dB) are treated as silence
+# and skipped. Make it more negative (e.g. -55) if quiet speech gets dropped.
+silence-threshold: -50
+
+# How the transcript reaches your cursor:
+#   type  = simulate keystrokes (does not touch your clipboard)
+#   paste = copy to clipboard then Cmd-V (faster for long text; restores clipboard after)
+paste-mode: type
+
+# Hard cap on a single recording in seconds (safety net).
+max-record-seconds: 300
