@@ -29,6 +29,10 @@ set -euo pipefail
 [ -f "$HOME/.env" ] && source "$HOME/.env"
 [ -f "./.env" ] && source "./.env"
 
+# macOS sox needs to be told to use the CoreAudio driver explicitly; otherwise
+# it fails with "no default audio device configured". Honor an existing override.
+export AUDIODRIVER="${AUDIODRIVER:-coreaudio}"
+
 # ---- Defaults (override in ~/.config/groq-flow/groq-flowrc) -------------------
 model="whisper-large-v3-turbo"
 language="en"             # ISO-639-1; "" = auto-detect
@@ -81,10 +85,19 @@ check_deps() {
   fi
   [ -n "${GROQ_API_KEY:-}" ] || die "GROQ_API_KEY not set. Add it to ~/.env"
   echo "All dependencies present. GROQ_API_KEY is set."
+  echo "Audio driver: AUDIODRIVER=$AUDIODRIVER"
   echo "Recording device check:"
-  rec -d trim 0 0.1 /tmp/groq-flow_devtest.wav 2>/dev/null \
-    && { echo "  microphone OK"; rm -f /tmp/groq-flow_devtest.wav; } \
-    || echo "  microphone test FAILED — check Microphone permission for your terminal."
+  local err
+  if err=$(rec -d trim 0 0.1 /tmp/groq-flow_devtest.wav 2>&1); then
+    echo "  microphone OK"
+    rm -f /tmp/groq-flow_devtest.wav
+  else
+    echo "  microphone test FAILED:"
+    echo "    ${err//$'\n'/$'\n'    }"
+    echo "  • 'can not open audio device' → grant your terminal/launcher app"
+    echo "    Microphone access in System Settings → Privacy & Security → Microphone."
+    echo "  • 'no default audio device configured' → set AUDIODRIVER=coreaudio."
+  fi
 }
 
 # ---- Typing / pasting at the cursor ----------------------------------------
