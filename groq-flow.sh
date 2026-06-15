@@ -22,6 +22,10 @@
 
 set -euo pipefail
 
+# Ensure Homebrew tools (sox/rec/jq) resolve even when launched from a
+# minimal-PATH context like Karabiner-Elements, Raycast, or launchd.
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 # ---- Load API key ----------------------------------------------------------
 # Source ~/.env first (the usual spot for a globally-invoked hotkey command),
 # then a project-local ./.env if present — local wins so you can override per dir.

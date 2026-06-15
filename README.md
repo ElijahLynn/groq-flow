@@ -58,21 +58,61 @@ groq-flow --check
 
 ## Permissions (the part everyone misses)
 
-macOS gates synthetic keystrokes and microphone access separately.
+macOS gates synthetic keystrokes and microphone access separately, and the
+permissions attach to **whatever app launches the script** — Karabiner-Elements,
+Hammerspoon, your terminal, etc.
 
-**Accessibility** — enable **Hammerspoon** before typing will work:
+**Karabiner-Elements** also needs its own one-time setup the first time you run
+it: approve the **driver / system extension** and turn on **Input Monitoring**
+(System Settings → Privacy & Security) so it can intercept Caps Lock.
 
-- **System Settings → Privacy & Security → Accessibility** → Hammerspoon → on
+**Accessibility** — required before typing will work:
 
-**Microphone** — Hammerspoon won't appear in this list until you've tried
-recording at least once. Press your hotkey (or run `groq-flow --check` via
-that hotkey) and allow the prompt. Then confirm in **System Settings → Privacy
-& Security → Microphone** if needed.
+- **System Settings → Privacy & Security → Accessibility** → enable the
+  launching app → on
+
+**Microphone** — the launching app won't appear in this list until you've tried
+recording at least once. Press your hotkey (or run `groq-flow --check`) and
+allow the prompt. Then confirm in **System Settings → Privacy & Security →
+Microphone** if needed.
 
 If text isn't appearing, Accessibility is almost always the cause. If recording
 fails, it's Microphone — trigger a recording first so the app shows up to enable.
 
 ## Bind it to a hotkey
+
+### Caps Lock (recommended) — via Karabiner-Elements
+
+Caps Lock is a great push-to-dictate key, but macOS doesn't expose it as a
+bindable key to normal hotkey tools. [Karabiner-Elements](https://karabiner-elements.pqrs.org)
+can intercept it and run the script directly:
+
+```bash
+brew install --cask karabiner-elements
+open -a Karabiner-Elements      # grant the driver + Input Monitoring when asked
+```
+
+Add this rule to `~/.config/karabiner/karabiner.json` under the selected
+profile's `complex_modifications.rules` (Karabiner live-reloads on save):
+
+```json
+{
+  "description": "Caps Lock → groq-flow dictation toggle",
+  "manipulators": [
+    {
+      "type": "basic",
+      "from": { "key_code": "caps_lock", "modifiers": { "optional": ["any"] } },
+      "to": [ { "shell_command": "/Users/YOU/.local/bin/groq-flow" } ]
+    }
+  ]
+}
+```
+
+Each Caps Lock press toggles recording. Because Karabiner launches the command
+with a minimal `PATH`, the script puts `/opt/homebrew/bin` on `PATH` itself so
+`sox`/`rec`/`jq` resolve.
+
+### Hammerspoon (alternative)
 
 Launch Hammerspoon once, then add to `~/.hammerspoon/init.lua`:
 
