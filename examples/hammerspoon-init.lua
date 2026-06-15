@@ -90,9 +90,9 @@ end
 
 -- ---- Style: pulsing 3D orb with the Grok lightning bolt ---------------------
 local function groqFlowShowOrb(rgb)
-  local SZ = 96
+  local SZ = 120 -- canvas; larger than the orb so the pulsing halo isn't clipped
   local x, y = gfPos(SZ, SZ)
-  local cx, cy, R = SZ / 2, SZ / 2, SZ * 0.32
+  local cx, cy, R = SZ / 2, SZ / 2, SZ * 0.25
   groqFlowCanvas = hs.canvas.new({ x = x, y = y, w = SZ, h = SZ })
   groqFlowCanvas[1] = { -- soft colored halo glow in the bolt color (pulses)
     type = "circle", action = "fill",
