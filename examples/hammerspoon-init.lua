@@ -49,9 +49,9 @@ local function gfPos(w, h) -- bottom-center placement on the main screen
 end
 
 -- Stylized lightning bolt outline (normalized 0..1, y points down).
-local GF_BOLT = {
-  { 0.52, 0.02 }, { 0.18, 0.56 }, { 0.44, 0.56 },
-  { 0.30, 0.98 }, { 0.82, 0.42 }, { 0.56, 0.42 }, { 0.70, 0.02 },
+local GF_BOLT = { -- single pointed apex at top, single point at bottom (no flat edges)
+  { 0.60, 0.00 }, { 0.20, 0.54 }, { 0.44, 0.54 },
+  { 0.34, 1.00 }, { 0.80, 0.44 }, { 0.54, 0.44 },
 }
 local function gfBoltCoords(cx, cy, size)
   local pts = {}
