@@ -24,6 +24,8 @@ paste-mode: type
 # Hard cap on a single recording in seconds (safety net).
 max-record-seconds: 300
 
-# Color of the on-screen recording level-meter (Hammerspoon setup only).
-# One of: red, orange, yellow, green, blue, purple, pink, white.
+# On-screen recording indicator (Hammerspoon setup only).
+# Color: red, orange, yellow, green, blue, purple, pink, white.
 indicator-color: red
+# Style: "meter" (animated level bars) or "orb" (pulsing 3D Grok orb).
+indicator-style: meter

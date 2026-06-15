@@ -10,20 +10,19 @@
 -- background daemon that macOS will NOT grant the microphone to — hence this
 -- F18 hop through Hammerspoon.
 
-require("hs.ipc") -- enables the `hs` command-line tool used to toggle the meter
+require("hs.ipc") -- enables the `hs` command-line tool used to toggle the indicator
 
 -- EDIT THIS to wherever your script lives (e.g. ~/.local/bin/groq-flow).
-local GROQFLOW = os.getenv("HOME") .. "/.local/bin/groq-flow"
+local GROQ_FLOW = os.getenv("HOME") .. "/.local/bin/groq-flow"
 
--- ---- Recording indicator: small animated red level-meter, bottom-center ----
--- Toggled by groq-flow.sh via `hs -c "groqFlowIndicator(true|false)"`.
+-- ---- Recording indicator ---------------------------------------------------
+-- Toggled by groq-flow.sh via:
+--   hs -c "groqFlowIndicator(true, '<color>', '<style>')"
+-- Styles: "meter" (animated level bars) and "orb" (pulsing 3D Grok orb).
 groqFlowCanvas = nil
 groqFlowTimer = nil
 
-local GF_BARS, GF_BARW, GF_GAP, GF_MAXH, GF_MINH = 5, 5, 4, 24, 5
-local GF_PAD = 36 -- px above the bottom of the usable screen
-
--- Human color name → RGB for the meter bars (set via the indicator-color config).
+-- Human color name → RGB for the indicator (set via the indicator-color config).
 local GF_COLORS = {
   red    = { 1.00, 0.23, 0.19 },
   orange = { 1.00, 0.58, 0.00 },
@@ -35,19 +34,38 @@ local GF_COLORS = {
   white  = { 0.95, 0.95, 0.95 },
 }
 
-function groqFlowIndicator(on, color)
-  if groqFlowTimer then groqFlowTimer:stop(); groqFlowTimer = nil end
-  if groqFlowCanvas then groqFlowCanvas:delete(); groqFlowCanvas = nil end
-  if not on then return end
+local GF_BARS, GF_BARW, GF_GAP, GF_MAXH, GF_MINH = 5, 5, 4, 24, 5
+local GF_PAD = 36 -- px above the bottom of the usable screen
 
-  local rgb = GF_COLORS[color] or GF_COLORS.red
-  local fill = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.95 }
-
+local function gfLighter(rgb, f) -- blend toward white
+  return { red = rgb[1] + (1 - rgb[1]) * f, green = rgb[2] + (1 - rgb[2]) * f, blue = rgb[3] + (1 - rgb[3]) * f, alpha = 1 }
+end
+local function gfDarker(rgb, f) -- scale toward black
+  return { red = rgb[1] * f, green = rgb[2] * f, blue = rgb[3] * f, alpha = 1 }
+end
+local function gfPos(w, h) -- bottom-center placement on the main screen
   local f = hs.screen.mainScreen():frame()
-  local w = GF_BARS * GF_BARW + (GF_BARS - 1) * GF_GAP
-  local x = f.x + (f.w - w) / 2
-  local y = f.y + f.h - GF_MAXH - GF_PAD
+  return f.x + (f.w - w) / 2, f.y + f.h - h - GF_PAD
+end
 
+-- Stylized lightning bolt outline (normalized 0..1, y points down).
+local GF_BOLT = {
+  { 0.52, 0.02 }, { 0.18, 0.56 }, { 0.44, 0.56 },
+  { 0.30, 0.98 }, { 0.82, 0.42 }, { 0.56, 0.42 }, { 0.70, 0.02 },
+}
+local function gfBoltCoords(cx, cy, size)
+  local pts = {}
+  for i = 1, #GF_BOLT do
+    pts[i] = { x = cx + (GF_BOLT[i][1] - 0.5) * size, y = cy + (GF_BOLT[i][2] - 0.5) * size }
+  end
+  return pts
+end
+
+-- ---- Style: animated level-meter bars --------------------------------------
+local function groqFlowShowMeter(rgb)
+  local w = GF_BARS * GF_BARW + (GF_BARS - 1) * GF_GAP
+  local x, y = gfPos(w, GF_MAXH)
+  local fill = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.95 }
   groqFlowCanvas = hs.canvas.new({ x = x, y = y, w = w, h = GF_MAXH })
   for i = 1, GF_BARS do
     groqFlowCanvas[i] = {
@@ -61,7 +79,6 @@ function groqFlowIndicator(on, color)
   groqFlowCanvas:level(hs.canvas.windowLevels.overlay)
   groqFlowCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
   groqFlowCanvas:show()
-
   groqFlowTimer = hs.timer.doEvery(0.1, function()
     if not groqFlowCanvas then return end
     for i = 1, GF_BARS do
@@ -71,12 +88,71 @@ function groqFlowIndicator(on, color)
   end)
 end
 
--- ---- Hotkeys ---------------------------------------------------------------
-local function runGroqFlow()
-  hs.task.new(GROQFLOW, nil):start()
+-- ---- Style: pulsing 3D orb with the Grok lightning bolt ---------------------
+local function groqFlowShowOrb(rgb)
+  local SZ = 96
+  local x, y = gfPos(SZ, SZ)
+  local cx, cy, R = SZ / 2, SZ / 2, SZ * 0.30
+  groqFlowCanvas = hs.canvas.new({ x = x, y = y, w = SZ, h = SZ })
+  groqFlowCanvas[1] = { -- soft halo glow (pulses)
+    type = "circle", action = "fill",
+    fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.25 },
+    center = { x = cx, y = cy }, radius = R * 1.4,
+  }
+  groqFlowCanvas[2] = { -- the orb: radial gradient gives a 3D sphere look
+    type = "circle", action = "fill",
+    fillGradient = "radial",
+    fillGradientColors = { gfLighter(rgb, 0.55), gfDarker(rgb, 0.45) },
+    fillGradientCenter = { x = -0.35, y = -0.35 }, -- highlight toward top-left
+    center = { x = cx, y = cy }, radius = R,
+  }
+  groqFlowCanvas[3] = { -- glossy specular highlight
+    type = "circle", action = "fill",
+    fillColor = { white = 1, alpha = 0.28 },
+    center = { x = cx - R * 0.30, y = cy - R * 0.32 }, radius = R * 0.30,
+  }
+  groqFlowCanvas[4] = { -- lightning bolt
+    type = "segments", closed = true, action = "fill",
+    fillColor = { white = 1, alpha = 0.95 },
+    coordinates = gfBoltCoords(cx, cy, R * 1.5),
+  }
+  groqFlowCanvas:level(hs.canvas.windowLevels.overlay)
+  groqFlowCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
+  groqFlowCanvas:show()
+  local t = 0
+  groqFlowTimer = hs.timer.doEvery(0.04, function() -- slow ~2.2s pulse
+    if not groqFlowCanvas then return end
+    t = t + 1
+    local a = math.sin(t * (2 * math.pi / 55))
+    local u = a * 0.5 + 0.5 -- 0..1
+    local s = 1 + 0.06 * a  -- gentle breathing scale
+    groqFlowCanvas[1].radius = R * (1.30 + 0.30 * u)
+    groqFlowCanvas[1].fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.12 + 0.22 * u }
+    groqFlowCanvas[2].radius = R * s
+    groqFlowCanvas[3].radius = R * 0.30 * s
+    groqFlowCanvas[3].center = { x = cx - R * 0.30 * s, y = cy - R * 0.32 * s }
+    groqFlowCanvas[4].coordinates = gfBoltCoords(cx, cy, R * 1.5 * s)
+  end)
 end
 
-hs.hotkey.bind({}, "f18", runGroqFlow)          -- Caps Lock (via Karabiner → F18)
+function groqFlowIndicator(on, color, style)
+  if groqFlowTimer then groqFlowTimer:stop(); groqFlowTimer = nil end
+  if groqFlowCanvas then groqFlowCanvas:delete(); groqFlowCanvas = nil end
+  if not on then return end
+  local rgb = GF_COLORS[color] or GF_COLORS.red
+  if style == "orb" then
+    groqFlowShowOrb(rgb)
+  else
+    groqFlowShowMeter(rgb)
+  end
+end
+
+-- ---- Hotkeys ---------------------------------------------------------------
+local function runGroqFlow()
+  hs.task.new(GROQ_FLOW, nil):start()
+end
+
+hs.hotkey.bind({}, "f18", runGroqFlow)             -- Caps Lock (via Karabiner → F18)
 hs.hotkey.bind({ "cmd", "alt" }, "D", runGroqFlow) -- backup chord
 
 hs.alert.show("groq-flow config loaded")

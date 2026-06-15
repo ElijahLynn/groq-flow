@@ -101,13 +101,13 @@ from a background daemon that **macOS won't grant Microphone access to** — so
 recordings come back silent. Remapping Caps Lock to an unused key (**F18**) and
 catching it in **Hammerspoon** — a real app you grant Microphone + Accessibility
 — gives the spawned `sox`/`osascript` a permitted context. Hammerspoon also
-draws the on-screen recording level-meter.
+draws the on-screen recording indicator.
 
 Ready-to-use configs are in [`examples/`](examples/) — see
 [`examples/README.md`](examples/README.md) for step-by-step setup:
 
 - [`examples/karabiner-caps-lock-to-f18.json`](examples/karabiner-caps-lock-to-f18.json) — importable Karabiner rule
-- [`examples/hammerspoon-init.lua`](examples/hammerspoon-init.lua) — F18 binding + level-meter
+- [`examples/hammerspoon-init.lua`](examples/hammerspoon-init.lua) — F18 binding + recording indicator (meter or orb)
 
 ```bash
 brew install --cask karabiner-elements hammerspoon
@@ -138,13 +138,16 @@ Karabiner to remap it first.
 | `silence-threshold`    | `-50`                     | dB peak below which a clip counts as silent        |
 | `paste-mode`           | `type`                    | `type` (keystrokes) or `paste` (clipboard + Cmd-V) |
 | `max-record-seconds`   | `300`                     | hard cap on one recording                          |
-| `indicator-color`      | `red`                     | level-meter color (Hammerspoon setup)              |
+| `indicator-color`      | `red`                     | indicator color (Hammerspoon setup)                |
+| `indicator-style`      | `meter`                   | `meter` (level bars) or `orb` (pulsing Grok orb)   |
 
 Set `model: whisper-large-v3` if you want the slightly more accurate (but
 slower) model for long or noisy audio.
 
-`indicator-color` accepts `red`, `orange`, `yellow`, `green`, `blue`, `purple`,
-`pink`, or `white` (only affects the Hammerspoon level-meter).
+The recording indicator (Hammerspoon setup only) comes in two styles —
+`indicator-style: meter` (animated level bars) or `indicator-style: orb` (a
+slowly pulsing 3D orb with the Grok lightning bolt). Both honor `indicator-color`
+(`red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, `white`).
 
 ## Notes & limits
 

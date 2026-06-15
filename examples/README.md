@@ -1,7 +1,8 @@
 # Caps Lock dictation setup (Karabiner + Hammerspoon)
 
 These files make **Caps Lock** toggle groq-flow dictation, with a small
-recording level-meter at the bottom of the screen.
+recording indicator at the bottom of the screen (a level-meter or, with
+`indicator-style: orb`, a pulsing 3D Grok orb).
 
 ## Why two tools?
 
@@ -49,5 +50,5 @@ Caps Lock ──(Karabiner: remap to F18)──▶ Hammerspoon (F18 hotkey) ─�
 ## Test
 
 Click into any text field, tap **Caps Lock**, speak, tap **Caps Lock** again —
-the level-meter appears while recording and the transcript types at your cursor.
+the indicator appears while recording and the transcript types at your cursor.
 Run `groq-flow --log` if anything misbehaves.

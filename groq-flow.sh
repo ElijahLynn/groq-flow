@@ -43,7 +43,8 @@ transcription_prompt=""   # domain words / spelling hints
 silence_threshold=-50     # dB; recordings quieter than this are treated as silent
 paste_mode="type"         # "type" = simulate keystrokes, "paste" = clipboard + Cmd-V
 max_record_seconds=300    # hard cap so a forgotten recording can't run forever
-indicator_color="red"     # level-meter color: red, orange, yellow, green, blue, purple, pink, white
+indicator_color="red"     # indicator color: red, orange, yellow, green, blue, purple, pink, white
+indicator_style="meter"   # indicator style: "meter" (level bars) or "orb" (pulsing Grok orb)
 
 RECORDING="/tmp/groq-flow.wav"
 PIDFILE="/tmp/groq-flow.pid"
@@ -64,6 +65,7 @@ if [ -f "$CONFIG_FILE" ]; then
       paste-mode)            paste_mode="$value" ;;
       max-record-seconds)    max_record_seconds="$value" ;;
       indicator-color)       indicator_color="$value" ;;
+      indicator-style)       indicator_style="$value" ;;
     esac
   done < "$CONFIG_FILE"
 fi
@@ -83,7 +85,8 @@ die() { echo "Error: $*" >&2; log "ERROR: $*"; exit 1; }
 indicator_show() {
   # Sanitize to letters only so it's safe to interpolate into the hs command.
   local color="${indicator_color//[^a-zA-Z]/}"
-  if command -v hs >/dev/null 2>&1 && hs -c "groqFlowIndicator(true, '${color:-red}')" >/dev/null 2>&1; then
+  local style="${indicator_style//[^a-zA-Z]/}"
+  if command -v hs >/dev/null 2>&1 && hs -c "groqFlowIndicator(true, '${color:-red}', '${style:-meter}')" >/dev/null 2>&1; then
     return
   fi
   notify "groq-flow" "Recording… (hotkey again to stop)"
