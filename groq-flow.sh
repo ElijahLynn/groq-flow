@@ -50,6 +50,19 @@ RECORDING="/tmp/groq-flow.wav"
 PIDFILE="/tmp/groq-flow.pid"
 LOGFILE="/tmp/groq-flow.log"
 
+# Start capturing IMMEDIATELY on a plain toggle press — before the config parse
+# and the rest of setup — so the first word isn't lost to startup latency. Only
+# for the normal toggle (no args) when not already recording; flags and the stop
+# press fall through to Main below.
+GF_EARLY_START=0
+if [ -z "${1:-}" ] && command -v rec >/dev/null 2>&1 \
+   && ! { [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; }; then
+  rm -f "$PIDFILE"
+  rec -q -c 1 -r 16000 "$RECORDING" trim 0 "$max_record_seconds" >/dev/null 2>&1 &
+  echo $! > "$PIDFILE"
+  GF_EARLY_START=1
+fi
+
 CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/groq-flow/groq-flowrc"
 if [ -f "$CONFIG_FILE" ]; then
   while IFS=: read -r key value || [ -n "$key" ]; do
@@ -283,10 +296,17 @@ case "${1:-}" in
 esac
 
 command -v rec >/dev/null 2>&1 || die "sox not installed. Run: brew install sox  (then ./groq-flow.sh --check)"
-[ -n "${GROQ_API_KEY:-}" ] || die "GROQ_API_KEY not set. Add it to ~/.env"
 
-# Toggle: if a recording PID is live, stop+transcribe; otherwise start.
+# Recording was already launched at the top (see GF_EARLY_START); just confirm.
+if [ "$GF_EARLY_START" = "1" ]; then
+  log "Recording started."
+  indicator_show
+  exit 0
+fi
+
+# Toggle: if a recording PID is live, stop+transcribe; otherwise start (fallback).
 if [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; then
+  [ -n "${GROQ_API_KEY:-}" ] || die "GROQ_API_KEY not set. Add it to ~/.env"
   stop_and_transcribe
 else
   rm -f "$PIDFILE"
