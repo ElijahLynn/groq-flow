@@ -90,14 +90,15 @@ end
 
 -- ---- Style: pulsing 3D orb with the Grok lightning bolt ---------------------
 local function groqFlowShowOrb(rgb)
-  local SZ = 120 -- canvas; larger than the orb so the pulsing halo isn't clipped
+  local SZ = 84
   local x, y = gfPos(SZ, SZ)
-  local cx, cy, R = SZ / 2, SZ / 2, SZ * 0.25
+  local cx, cy, R = SZ / 2, SZ / 2, SZ * 0.34
   groqFlowCanvas = hs.canvas.new({ x = x, y = y, w = SZ, h = SZ })
-  groqFlowCanvas[1] = { -- soft colored halo glow in the bolt color (pulses)
-    type = "circle", action = "fill",
-    fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.30 },
-    center = { x = cx, y = cy }, radius = R * 1.35,
+  groqFlowCanvas[1] = { -- thin (~2px) ring around the orb (gently pulses)
+    type = "circle", action = "stroke",
+    strokeColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.9 },
+    strokeWidth = 2,
+    center = { x = cx, y = cy }, radius = R + 2,
   }
   groqFlowCanvas[2] = { -- white 3D sphere: radial gradient bright -> light gray
     type = "circle", action = "fill",
@@ -120,18 +121,11 @@ local function groqFlowShowOrb(rgb)
   groqFlowCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
   groqFlowCanvas:show()
   local t = 0
-  groqFlowTimer = hs.timer.doEvery(0.04, function() -- slow ~2.2s pulse
+  groqFlowTimer = hs.timer.doEvery(0.05, function() -- gentle ~2.2s pulse of the ring
     if not groqFlowCanvas then return end
     t = t + 1
-    local a = math.sin(t * (2 * math.pi / 55))
-    local u = a * 0.5 + 0.5 -- 0..1
-    local s = 1 + 0.05 * a  -- gentle breathing scale
-    groqFlowCanvas[1].radius = R * (1.25 + 0.30 * u)
-    groqFlowCanvas[1].fillColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.15 + 0.25 * u }
-    groqFlowCanvas[2].radius = R * s
-    groqFlowCanvas[3].radius = R * 0.18 * s
-    groqFlowCanvas[3].center = { x = cx - R * 0.34 * s, y = cy - R * 0.36 * s }
-    groqFlowCanvas[4].coordinates = gfBoltCoords(cx, cy, R * 1.45 * s)
+    local u = math.sin(t * (2 * math.pi / 44)) * 0.5 + 0.5
+    groqFlowCanvas[1].strokeColor = { red = rgb[1], green = rgb[2], blue = rgb[3], alpha = 0.55 + 0.45 * u }
   end)
 end
 
@@ -155,4 +149,5 @@ end
 hs.hotkey.bind({}, "f18", runGroqFlow)             -- Caps Lock (via Karabiner → F18)
 hs.hotkey.bind({ "cmd", "alt" }, "D", runGroqFlow) -- backup chord
 
-hs.alert.show("groq-flow config loaded")
+groqFlowBuild = "ring-v1"
+hs.alert.show("groq-flow loaded (" .. groqFlowBuild .. ")")
