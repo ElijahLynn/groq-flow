@@ -47,7 +47,7 @@ is a local CLI, not a web app, so the key isn't exposed to a browser.
 ```bash
 # 1. Dependencies
 brew install sox jq curl
-brew install --cask hammerspoon
+brew install --cask karabiner-elements hammerspoon
 
 # 2. API key — get one at https://console.groq.com/keys, then:
 echo 'GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx' >> ~/.env
