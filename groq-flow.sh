@@ -45,25 +45,35 @@ paste_mode="type"         # "type" = simulate keystrokes, "paste" = clipboard + 
 max_record_seconds=300    # hard cap so a forgotten recording can't run forever
 indicator_color="red"     # indicator color: red, orange, yellow, green, blue, purple, pink, white
 indicator_style="meter"   # indicator style: "meter" (level bars) or "orb" (pulsing Grok orb)
+input_device=""           # CoreAudio input device name; "" = system default mic
 
 RECORDING="/tmp/groq-flow.wav"
 PIDFILE="/tmp/groq-flow.pid"
 LOGFILE="/tmp/groq-flow.log"
+CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/groq-flow/groq-flowrc"
 
-# Start capturing IMMEDIATELY on a plain toggle press — before the config parse
-# and the rest of setup — so the first word isn't lost to startup latency. Only
-# for the normal toggle (no args) when not already recording; flags and the stop
-# press fall through to Main below.
+# Resolve the input device BEFORE launching rec so the very first capture uses
+# the right mic. Bluetooth headset mics cold-start slowly (the link switches to
+# hands-free mode) and clip the first word — pinning to the built-in mic via the
+# input-device setting avoids that. (Full config parse happens below.)
+if [ -f "$CONFIG_FILE" ]; then
+  _dev=$(sed -n 's/^[[:space:]]*input-device[[:space:]]*:[[:space:]]*//p' "$CONFIG_FILE" | head -1)
+  _dev="${_dev%\"}"; _dev="${_dev#\"}"
+  [ -n "$_dev" ] && export AUDIODEV="$_dev"
+fi
+
+# Start capturing IMMEDIATELY on a plain toggle press — before the rest of setup
+# — so the first word isn't lost to startup latency. Only for the normal toggle
+# (no args) when not already recording; flags and the stop press fall through to
+# Main below. Native rate/channels (no -r/-c) keep the device open fast.
 GF_EARLY_START=0
 if [ -z "${1:-}" ] && command -v rec >/dev/null 2>&1 \
    && ! { [ -f "$PIDFILE" ] && kill -0 "$(cat "$PIDFILE")" 2>/dev/null; }; then
   rm -f "$PIDFILE"
-  rec -q -c 1 -r 16000 "$RECORDING" trim 0 "$max_record_seconds" >/dev/null 2>&1 &
+  rec -q "$RECORDING" trim 0 "$max_record_seconds" >/dev/null 2>&1 &
   echo $! > "$PIDFILE"
   GF_EARLY_START=1
 fi
-
-CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/groq-flow/groq-flowrc"
 if [ -f "$CONFIG_FILE" ]; then
   while IFS=: read -r key value || [ -n "$key" ]; do
     [[ "$key" =~ ^[[:space:]]*# ]] && continue
@@ -79,6 +89,7 @@ if [ -f "$CONFIG_FILE" ]; then
       max-record-seconds)    max_record_seconds="$value" ;;
       indicator-color)       indicator_color="$value" ;;
       indicator-style)       indicator_style="$value" ;;
+      input-device)          input_device="$value" ;;
     esac
   done < "$CONFIG_FILE"
 fi
@@ -247,9 +258,10 @@ transcribe() {
 # ---- Recording control -----------------------------------------------------
 start_recording() {
   log "Recording started."
-  # 16kHz mono is what Whisper-class models want; small file, fast upload.
+  # Native rate/channels for lowest startup latency (no resampler priming).
   # rec writes until killed or max_record_seconds elapses.
-  rec -q -c 1 -r 16000 "$RECORDING" trim 0 "$max_record_seconds" >/dev/null 2>&1 &
+  [ -n "$input_device" ] && export AUDIODEV="$input_device"
+  rec -q "$RECORDING" trim 0 "$max_record_seconds" >/dev/null 2>&1 &
   echo $! > "$PIDFILE"
   indicator_show
 }

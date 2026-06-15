@@ -25,6 +25,12 @@ paste-mode: type
 # Hard cap on a single recording in seconds (safety net).
 max-record-seconds: 300
 
+# CoreAudio input device to record from. Leave blank for the system default.
+# Set this to your built-in mic (e.g. "MacBook Pro Microphone") if your default
+# input is a Bluetooth headset — BT mics cold-start slowly and clip the first
+# word. List devices with:  system_profiler SPAudioDataType
+# input-device: MacBook Pro Microphone
+
 # On-screen recording indicator (Hammerspoon setup only).
 # Color: red, orange, yellow, green, blue, purple, pink, white.
 indicator-color: red

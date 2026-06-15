@@ -140,6 +140,7 @@ Karabiner to remap it first.
 | `max-record-seconds`   | `300`                     | hard cap on one recording                          |
 | `indicator-color`      | `red`                     | indicator color (Hammerspoon setup)                |
 | `indicator-style`      | `meter`                   | `meter` (level bars) or `orb` (pulsing Grok orb)   |
+| `input-device`         | *(system default)*        | CoreAudio mic to record from (e.g. built-in mic)   |
 
 Set `model: whisper-large-v3` if you want the slightly more accurate (but
 slower) model for long or noisy audio.
@@ -148,6 +149,12 @@ The recording indicator (Hammerspoon setup only) comes in two styles —
 `indicator-style: meter` (animated level bars) or `indicator-style: orb` (a
 slowly pulsing 3D orb with the Grok lightning bolt). Both honor `indicator-color`
 (`red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, `white`).
+
+**Clipped first word?** If your first word gets cut off, your default mic is
+probably a **Bluetooth headset** — those cold-start slowly (the link switches to
+hands-free mode), losing the start of your speech. Pin groq-flow to your built-in
+mic with `input-device: MacBook Pro Microphone` (find exact names via
+`system_profiler SPAudioDataType`). You keep the headset for audio output.
 
 ## Notes & limits
 
