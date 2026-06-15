@@ -18,8 +18,10 @@ real-time), so dictation feels near-instant.
   types it at your cursor.
 3. Silent clips and API errors just show a notification and do nothing.
 
-The API key never leaves your machine except in the request to Groq. This is a
-local CLI, not a web app, so the key isn't exposed to a browser.
+The API key is read from `~/.env` (handy for a global hotkey, which runs from
+no particular directory) and, if present, a project-local `./.env` that takes
+precedence. It never leaves your machine except in the request to Groq — this
+is a local CLI, not a web app, so the key isn't exposed to a browser.
 
 ## Install
 
@@ -29,6 +31,7 @@ brew install sox jq curl
 
 # 2. API key — get one at https://console.groq.com/keys, then:
 echo 'GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx' >> ~/.env
+# (or drop a project-local ./.env with the same line — it overrides ~/.env)
 
 # 3. Drop the script somewhere on your PATH and make it runnable
 mkdir -p ~/bin

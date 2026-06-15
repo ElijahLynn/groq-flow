@@ -12,7 +12,8 @@
 #   - osascript / pbcopy  (built into macOS — typing & clipboard)
 #
 # Setup:
-#   1. Get a Groq API key from https://console.groq.com/keys and put it in ~/.env :
+#   1. Get a Groq API key from https://console.groq.com/keys and put it in
+#      ~/.env (or a project-local ./.env, which overrides ~/.env) :
 #        GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxx
 #   2. chmod +x groq-flow.sh ; ./groq-flow.sh --check
 #   3. Grant Accessibility + Microphone permissions when prompted
@@ -23,7 +24,10 @@
 set -euo pipefail
 
 # ---- Load API key ----------------------------------------------------------
+# Source ~/.env first (the usual spot for a globally-invoked hotkey command),
+# then a project-local ./.env if present — local wins so you can override per dir.
 [ -f "$HOME/.env" ] && source "$HOME/.env"
+[ -f "./.env" ] && source "./.env"
 
 # ---- Defaults (override in ~/.config/groq-flow/groq-flowrc) -------------------
 model="whisper-large-v3-turbo"
