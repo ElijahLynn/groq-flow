@@ -40,7 +40,7 @@ export AUDIODRIVER="${AUDIODRIVER:-coreaudio}"
 model="whisper-large-v3-turbo"
 language="en"             # ISO-639-1; "" = auto-detect
 transcription_prompt=""   # domain words / spelling hints
-silence_threshold=-50     # dB; recordings quieter than this are treated as silent
+silence_threshold=-45     # dB RMS; clips with average level below this are treated as silent
 paste_mode="type"         # "type" = simulate keystrokes, "paste" = clipboard + Cmd-V
 max_record_seconds=300    # hard cap so a forgotten recording can't run forever
 indicator_color="red"     # indicator color: red, orange, yellow, green, blue, purple, pink, white
@@ -147,16 +147,30 @@ type_text() {
 # ---- Silence detection -----------------------------------------------------
 is_silent() {
   local recording="$1"
-  # sox stat reports "Maximum amplitude". Convert to dB and compare.
-  local max_amp
-  max_amp=$(sox "$recording" -n stat 2>&1 | awk -F: '/Maximum amplitude/{gsub(/ /,"",$2); print $2}')
-  [ -z "$max_amp" ] && return 1
+  # Use RMS (average) amplitude, not peak: it reflects sustained energy, so it
+  # tells real speech apart from quiet room tone (which a stray click would spike
+  # on a peak meter and wrongly pass through to the API as "sound").
+  local rms
+  rms=$(sox "$recording" -n stat 2>&1 | awk -F: '/RMS[[:space:]]+amplitude/{gsub(/ /,"",$2); print $2}')
+  [ -z "$rms" ] && return 1
   # amplitude 0..1 -> dB. Guard against 0.
-  awk -v a="$max_amp" -v t="$silence_threshold" 'BEGIN{
+  awk -v a="$rms" -v t="$silence_threshold" 'BEGIN{
     if (a<=0) { print "silent"; exit }
     db = 20*log(a)/log(10);
     if (db < t) print "silent"; else print "sound";
   }' | grep -q silent
+}
+
+# Whisper-class models loop/repeat when fed (near-)silence — e.g. "iDRAC, RHEL,
+# iDRAC, RHEL, ...". Treat output as hallucination when it's long but made of
+# very few unique words.
+is_repetitive() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9' ' ' | awk '
+    { for (i = 1; i <= NF; i++) { total++; seen[$i] = 1 } }
+    END {
+      uniq = 0; for (k in seen) uniq++;
+      exit (total >= 6 && uniq <= total * 0.4) ? 0 : 1;
+    }'
 }
 
 # Whisper-class models echo the bias prompt when the audio is (near-)silent, so
@@ -247,8 +261,8 @@ stop_and_transcribe() {
   rm -f "$RECORDING"
 
   [ -z "$transcription" ] && exit 0
-  if is_prompt_echo "$transcription"; then
-    log "Discarded prompt echo (no speech): [$transcription]"
+  if is_prompt_echo "$transcription" || is_repetitive "$transcription"; then
+    log "Discarded likely hallucination (no speech): [$transcription]"
     exit 0
   fi
   type_text "$transcription"

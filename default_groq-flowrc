@@ -12,9 +12,10 @@ language: en
 # e.g. proper nouns, product names, acronyms you say often.
 transcription-prompt: Hedera, Hiero, Hashgraph, Jenkins, Ansible, iDRAC, RHEL
 
-# Recordings whose peak volume is below this (in dB) are treated as silence
-# and skipped. Make it more negative (e.g. -55) if quiet speech gets dropped.
-silence-threshold: -50
+# Clips whose average (RMS) level is below this (in dB) are treated as silence
+# and skipped — this is what stops empty presses from hallucinating text.
+# Make it more negative (e.g. -50) if quiet speech gets dropped.
+silence-threshold: -45
 
 # How the transcript reaches your cursor:
 #   type  = simulate keystrokes (does not touch your clipboard)
