@@ -1,0 +1,24 @@
+{
+    "title": "groq-flow: Caps Lock → F18",
+    "rules": [
+        {
+            "description": "Caps Lock → F18 (groq-flow dictation, handled by Hammerspoon)",
+            "manipulators": [
+                {
+                    "type": "basic",
+                    "from": {
+                        "key_code": "caps_lock",
+                        "modifiers": {
+                            "optional": ["any"]
+                        }
+                    },
+                    "to": [
+                        {
+                            "key_code": "f18"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

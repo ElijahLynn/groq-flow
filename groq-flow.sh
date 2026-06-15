@@ -76,6 +76,18 @@ notify() {
 
 die() { echo "Error: $*" >&2; log "ERROR: $*"; exit 1; }
 
+# Recording indicator: a persistent on-screen overlay via Hammerspoon if it's
+# reachable (hs CLI + IPC), otherwise a transient macOS notification.
+indicator_show() {
+  if command -v hs >/dev/null 2>&1 && hs -c "groqflowIndicator(true)" >/dev/null 2>&1; then
+    return
+  fi
+  notify "groq-flow" "Recording… (hotkey again to stop)"
+}
+indicator_hide() {
+  command -v hs >/dev/null 2>&1 && hs -c "groqflowIndicator(false)" >/dev/null 2>&1 || true
+}
+
 check_deps() {
   local missing=()
   for cmd in sox jq curl rec; do
@@ -181,18 +193,19 @@ transcribe() {
 
 # ---- Recording control -----------------------------------------------------
 start_recording() {
-  notify "groq-flow" "Recording… (hotkey again to stop)"
   log "Recording started."
   # 16kHz mono is what Whisper-class models want; small file, fast upload.
   # rec writes until killed or max_record_seconds elapses.
   rec -q -c 1 -r 16000 "$RECORDING" trim 0 "$max_record_seconds" >/dev/null 2>&1 &
   echo $! > "$PIDFILE"
+  indicator_show
 }
 
 stop_and_transcribe() {
   local pid; pid=$(cat "$PIDFILE")
   rm -f "$PIDFILE"
   kill "$pid" 2>/dev/null || true
+  indicator_hide
   sleep 0.3   # let sox flush the WAV
 
   [ -f "$RECORDING" ] || { notify "groq-flow" "No recording found"; exit 0; }
@@ -203,7 +216,6 @@ stop_and_transcribe() {
     exit 0
   fi
 
-  notify "groq-flow" "Transcribing…"
   local transcription
   transcription=$(transcribe "$RECORDING") || { rm -f "$RECORDING"; exit 1; }
   rm -f "$RECORDING"
