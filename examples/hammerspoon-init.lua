@@ -16,9 +16,9 @@ require("hs.ipc") -- enables the `hs` command-line tool used to toggle the meter
 local GROQFLOW = os.getenv("HOME") .. "/.local/bin/groq-flow"
 
 -- ---- Recording indicator: small animated red level-meter, bottom-center ----
--- Toggled by groq-flow.sh via `hs -c "groqflowIndicator(true|false)"`.
-groqflowCanvas = nil
-groqflowTimer = nil
+-- Toggled by groq-flow.sh via `hs -c "groqFlowIndicator(true|false)"`.
+groqFlowCanvas = nil
+groqFlowTimer = nil
 
 local GF_BARS, GF_BARW, GF_GAP, GF_MAXH, GF_MINH = 5, 5, 4, 24, 5
 local GF_PAD = 36 -- px above the bottom of the usable screen
@@ -35,9 +35,9 @@ local GF_COLORS = {
   white  = { 0.95, 0.95, 0.95 },
 }
 
-function groqflowIndicator(on, color)
-  if groqflowTimer then groqflowTimer:stop(); groqflowTimer = nil end
-  if groqflowCanvas then groqflowCanvas:delete(); groqflowCanvas = nil end
+function groqFlowIndicator(on, color)
+  if groqFlowTimer then groqFlowTimer:stop(); groqFlowTimer = nil end
+  if groqFlowCanvas then groqFlowCanvas:delete(); groqFlowCanvas = nil end
   if not on then return end
 
   local rgb = GF_COLORS[color] or GF_COLORS.red
@@ -48,9 +48,9 @@ function groqflowIndicator(on, color)
   local x = f.x + (f.w - w) / 2
   local y = f.y + f.h - GF_MAXH - GF_PAD
 
-  groqflowCanvas = hs.canvas.new({ x = x, y = y, w = w, h = GF_MAXH })
+  groqFlowCanvas = hs.canvas.new({ x = x, y = y, w = w, h = GF_MAXH })
   for i = 1, GF_BARS do
-    groqflowCanvas[i] = {
+    groqFlowCanvas[i] = {
       type = "rectangle",
       action = "fill",
       fillColor = fill,
@@ -58,25 +58,25 @@ function groqflowIndicator(on, color)
       frame = { x = (i - 1) * (GF_BARW + GF_GAP), y = GF_MAXH - GF_MINH, w = GF_BARW, h = GF_MINH },
     }
   end
-  groqflowCanvas:level(hs.canvas.windowLevels.overlay)
-  groqflowCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
-  groqflowCanvas:show()
+  groqFlowCanvas:level(hs.canvas.windowLevels.overlay)
+  groqFlowCanvas:behavior(hs.canvas.windowBehaviors.canJoinAllSpaces)
+  groqFlowCanvas:show()
 
-  groqflowTimer = hs.timer.doEvery(0.1, function()
-    if not groqflowCanvas then return end
+  groqFlowTimer = hs.timer.doEvery(0.1, function()
+    if not groqFlowCanvas then return end
     for i = 1, GF_BARS do
       local bh = GF_MINH + math.random() * (GF_MAXH - GF_MINH)
-      groqflowCanvas[i].frame = { x = (i - 1) * (GF_BARW + GF_GAP), y = GF_MAXH - bh, w = GF_BARW, h = bh }
+      groqFlowCanvas[i].frame = { x = (i - 1) * (GF_BARW + GF_GAP), y = GF_MAXH - bh, w = GF_BARW, h = bh }
     end
   end)
 end
 
 -- ---- Hotkeys ---------------------------------------------------------------
-local function runGroqflow()
+local function runGroqFlow()
   hs.task.new(GROQFLOW, nil):start()
 end
 
-hs.hotkey.bind({}, "f18", runGroqflow)          -- Caps Lock (via Karabiner → F18)
-hs.hotkey.bind({ "cmd", "alt" }, "D", runGroqflow) -- backup chord
+hs.hotkey.bind({}, "f18", runGroqFlow)          -- Caps Lock (via Karabiner → F18)
+hs.hotkey.bind({ "cmd", "alt" }, "D", runGroqFlow) -- backup chord
 
 hs.alert.show("groq-flow config loaded")

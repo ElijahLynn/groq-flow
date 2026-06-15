@@ -83,13 +83,13 @@ die() { echo "Error: $*" >&2; log "ERROR: $*"; exit 1; }
 indicator_show() {
   # Sanitize to letters only so it's safe to interpolate into the hs command.
   local color="${indicator_color//[^a-zA-Z]/}"
-  if command -v hs >/dev/null 2>&1 && hs -c "groqflowIndicator(true, '${color:-red}')" >/dev/null 2>&1; then
+  if command -v hs >/dev/null 2>&1 && hs -c "groqFlowIndicator(true, '${color:-red}')" >/dev/null 2>&1; then
     return
   fi
   notify "groq-flow" "Recording… (hotkey again to stop)"
 }
 indicator_hide() {
-  command -v hs >/dev/null 2>&1 && hs -c "groqflowIndicator(false)" >/dev/null 2>&1 || true
+  command -v hs >/dev/null 2>&1 && hs -c "groqFlowIndicator(false)" >/dev/null 2>&1 || true
 }
 
 check_deps() {
