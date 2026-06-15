@@ -150,10 +150,6 @@ The recording indicator (Hammerspoon setup only) comes in two styles —
 slowly pulsing 3D orb with the Grok lightning bolt). Both honor `indicator-color`
 (`red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink`, `white`).
 
-**Moving the indicator:** drag it anywhere while it's on screen (during a
-recording) and it stays there — the position is remembered across restarts. To
-recenter it at the bottom, run `hs -c "groqFlowResetPosition()"`.
-
 **Clipped first word?** If your first word gets cut off, your default mic is
 probably a **Bluetooth headset** — those cold-start slowly (the link switches to
 hands-free mode), losing the start of your speech. Pin groq-flow to your built-in
